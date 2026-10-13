@@ -6,6 +6,7 @@ import './details.css';
 import './refinements.css';
 import './single-page.css';
 import './readability.css';
+import './contact.css';
 
 const root = document.getElementById('root')!;
 const path = '/' + window.location.pathname.slice(import.meta.env.BASE_URL.length);

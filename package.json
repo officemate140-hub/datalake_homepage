@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test": "node --experimental-strip-types --test scripts/contact.test.ts",
     "dev": "vite --host 127.0.0.1 --port 5180 --strictPort",
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit && vite build && vite build --ssr src/entry-server.tsx --outDir .ssr && node scripts/prerender.mjs",
