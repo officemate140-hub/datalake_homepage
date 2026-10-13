@@ -3,7 +3,7 @@ import { ArrowUpRight, ArrowRight, ArrowDown, Menu, X, Activity, Cpu, Radio, Mov
 
 import DetailPage, { HomeTechnology, InlineSolutionDetails } from './DetailPages';
 import { routeHref, pageMetadata, solutionLinks } from './pageContent';
-import { ContactDeliveryError, sendContact } from './contact';
+import { CONTACT_EMAIL_PATTERN, ContactDeliveryError, sendContact } from './contact';
 
 const asset = (name: string) => `${import.meta.env.BASE_URL}assets/${name}`;
 const EMAIL = import.meta.env.VITE_COMPANY_EMAIL || 'japark.work@gmail.com';
@@ -80,6 +80,8 @@ function ContactDialog({ open, onClose }: { open: boolean; onClose: () => void }
   const pending = useRef(false);
   const statusRef = useRef<HTMLParagraphElement>(null);
   const [notice, setNotice] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const emailHelpId = useId();
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const sending = status === 'sending';
   useEffect(() => {
@@ -125,7 +127,14 @@ function ContactDialog({ open, onClose }: { open: boolean; onClose: () => void }
       <fieldset className="contact-fields" disabled={sending || status === 'sent'}>
       <legend className="contact-sr-only">문의 정보</legend>
       <div className="form-row"><label>회사 / 기관명 <span>*</span><input name="company" autoComplete="organization" placeholder="회사 또는 기관명" required maxLength={80} /></label><label>담당자명 <span>*</span><input name="name" autoComplete="name" placeholder="성함" required maxLength={40} /></label></div>
-      <label>회신 이메일 <span>*</span><input type="email" name="email" autoComplete="email" placeholder="name@company.com" required maxLength={120} /></label>
+      <label>회신 이메일 <span>*</span><input type="email" name="email" autoComplete="email" placeholder="name@company.com" required maxLength={120} pattern={CONTACT_EMAIL_PATTERN} aria-invalid={emailError ? true : undefined} aria-describedby={emailHelpId}
+        onInvalid={e => {
+          const message = e.currentTarget.validity.valueMissing ? '답변받으실 이메일 주소를 입력해 주세요.' : '이메일 주소를 확인해 주세요. 예: name@company.com';
+          e.currentTarget.setCustomValidity(message);
+          setEmailError(message); setNotice(''); setStatus('idle');
+        }}
+        onInput={e => { e.currentTarget.setCustomValidity(''); setEmailError(''); }}
+      /><span id={emailHelpId} className={`contact-email-help ${emailError ? 'contact-field-error' : ''}`} role={emailError ? 'alert' : undefined}>{emailError || '답변받으실 이메일 주소를 정확히 입력해 주세요.'}</span></label>
       <label>관심 분야<select name="equipment" defaultValue="산업 설비 고장예지"><option>산업 설비 고장예지</option><option>AI 솔루션 개발</option><option>IoT 디바이스 개발</option><option>기술 협력 및 기타</option></select></label>
       <label>문의 내용 <span>*</span><textarea name="message" rows={3} placeholder="대상 설비와 필요하신 내용을 알려주세요." required maxLength={1200} /></label>
       <div className="contact-honeypot" aria-hidden="true"><label>이 칸은 비워 주세요<input name="_honey" tabIndex={-1} autoComplete="off" /></label></div>
