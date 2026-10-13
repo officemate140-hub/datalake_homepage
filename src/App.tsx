@@ -1,3 +1,4 @@
+import { LanguageSwitcher, localizedHref, useLanguage } from './i18n';
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { ArrowUpRight, ArrowRight, ArrowDown, Menu, X, Activity, Cpu, Radio, MoveUpRight, Check, Mail, MapPin, Plus, Minus, ChevronDown } from 'lucide-react';
 
@@ -11,20 +12,22 @@ const ADDRESS = '강원특별자치도 원주시 입춘로 45, 씨동 1213호 (�
 const navigation = [{ label: '솔루션', href: '/solutions/' }, { label: '핵심 기술', href: '/technology/' }, { label: '적용 분야', href: '/applications/' }, { label: '회사 소개', href: '/company/' }];
 
 function Brand({ light = false, href = routeHref() }: { light?: boolean; href?: string }) {
-  return <a href={href} className={`brand ${light ? 'brand-light' : ''}`} aria-label="데이터레이크 홈으로">
+  const { localize } = useLanguage();
+  return localize(<a href={href} className={`brand ${light ? 'brand-light' : ''}`} aria-label="데이터레이크 홈으로">
     <span className="brand-symbol"><img src={asset('datalake-logo.png')} alt="" width="64" height="64" /></span>
     <span className="brand-word">DATALAKE<span>주식회사 데이터레이크</span></span>
-  </a>;
+  </a>);
 }
 
 function DataLandscape() {
+  const { localize } = useLanguage();
   const uid = useId().replaceAll(':', '');
   const point = (x: number, row: number) => {
     const depth = row / 38;
     return [x, 155 + row * 10 + Math.sin(x / 190 + depth * 1.6) * 66 - Math.exp(-(((x - 660) / 215) ** 2)) * (75 + depth * 80) + Math.sin(x / 370) * 42];
   };
   const lines = Array.from({ length: 39 }, (_, row) => Array.from({ length: 101 }, (_, col) => { const [x, y] = point(col * 12, row); return `${col ? 'L' : 'M'}${x.toFixed(1)},${y.toFixed(1)}`; }).join(' '));
-  return <div className="data-landscape" aria-hidden="true">
+  return localize(<div className="data-landscape" aria-hidden="true">
     <div className="landscape-glow" />
     <svg viewBox="0 0 1200 650" fill="none" className="landscape-svg">
       <defs>
@@ -38,7 +41,7 @@ function DataLandscape() {
     <span className="landscape-label label-one"><span /> CURRENT INTO INSIGHT</span>
     <span className="landscape-label label-two">DATA INTO FORESIGHT <ArrowUpRight size={15} /></span>
     <span className="coordinate">37°20′ N &nbsp; 127°59′ E</span>
-  </div>;
+  </div>);
 }
 
 const solutions = [
@@ -47,26 +50,28 @@ const solutions = [
 ];
 
 function WaveChart({ compact = false }: { compact?: boolean }) {
+  const { localize } = useLanguage();
   const d = Array.from({ length: 250 }, (_, i) => {
     const burst = Math.exp(-(((i - 157) / 13) ** 2));
     return `${i ? 'L' : 'M'}${i * 2},${62 + Math.sin(i * .59) * (8 + burst * 40) + Math.sin(i * .19) * 4}`;
   }).join(' ');
-  return <svg viewBox="0 0 500 130" fill="none" className={compact ? 'wave-chart compact' : 'wave-chart'} role="img" aria-label="전류의 신호 변화를 보여주는 설명용 파형">
+  return localize(<svg viewBox="0 0 500 130" fill="none" className={compact ? 'wave-chart compact' : 'wave-chart'} role="img" aria-label="전류의 신호 변화를 보여주는 설명용 파형">
     {[20, 60, 100].map(y => <path key={y} d={`M0 ${y}H500`} stroke="currentColor" strokeOpacity=".12" />)}
     {[0, 100, 200, 300, 400, 500].map(x => <path key={x} d={`M${x} 0V130`} stroke="currentColor" strokeOpacity=".08" />)}
     <rect x="286" y="0" width="60" height="130" fill="#27d2b4" fillOpacity=".09" />
     <path d={d} stroke="#45d9bc" strokeWidth="1.6" />
-  </svg>;
+  </svg>);
 }
 
 function SolutionVisual({ selected }: { selected: number }) {
+  const { localize } = useLanguage();
   const solution = solutions[selected];
-  return <div className={`solution-visual ${selected === 0 ? 'visual-ai' : 'visual-hardware'}`}>
+  return localize(<div className={`solution-visual ${selected === 0 ? 'visual-ai' : 'visual-hardware'}`}>
     <div className="visual-topline"><span><i /> {solution.visualLabel}</span><span>DL / {solution.number}</span></div>
     {selected === 1 ? <div className="hardware-visual"><img src={asset('iot-module-refined.png')} alt="데이터레이크 IoT 데이터 수집 모듈 보드" loading="lazy" /><div className="hardware-tags"><span>Current Sensing</span><span>Data Acquisition</span></div></div>
       : <div className="analysis-visual"><div className="analysis-title"><span>CURRENT-BASED DIAGNOSTICS</span><strong>전류에서 패턴으로</strong></div><WaveChart /><div className="model-flow"><span>신호 처리</span><ArrowRight size={16} /><span>특징 추출</span><ArrowRight size={16} /><span className="model-result">결함 분석</span></div></div>}
     <p className="visual-caption">{solution.caption}</p>
-  </div>;
+  </div>);
 }
 
 const applications = [
@@ -76,6 +81,7 @@ const applications = [
 ];
 
 function ContactDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { localize, t } = useLanguage();
   const ref = useRef<HTMLDialogElement>(null);
   const pending = useRef(false);
   const statusRef = useRef<HTMLParagraphElement>(null);
@@ -92,6 +98,9 @@ function ContactDialog({ open, onClose }: { open: boolean; onClose: () => void }
   useEffect(() => {
     if (status === 'sent' || status === 'error') statusRef.current?.focus();
   }, [status]);
+  useEffect(() => {
+    ref.current?.querySelector<HTMLInputElement>('input[name="email"]')?.setCustomValidity(t(emailError));
+  }, [emailError, t]);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (pending.current || status === 'sent') return;
@@ -119,7 +128,7 @@ function ContactDialog({ open, onClose }: { open: boolean; onClose: () => void }
         : '문의를 전송하지 못했습니다. 입력 내용은 유지됩니다. 잠시 후 다시 시도하거나 아래 이메일로 문의해 주세요.');
     } finally { pending.current = false; }
   }
-  return <dialog ref={ref} className="contact-dialog" onCancel={e => { if (pending.current) e.preventDefault(); else onClose(); }} onClose={onClose} onClick={e => { if (e.target === ref.current && !pending.current) onClose(); }} aria-labelledby="contact-title">
+  return localize(<dialog ref={ref} className="contact-dialog" onCancel={e => { if (pending.current) e.preventDefault(); else onClose(); }} onClose={onClose} onClick={e => { if (e.target === ref.current && !pending.current) onClose(); }} aria-labelledby="contact-title">
     <button className="dialog-close icon-button" onClick={onClose} disabled={sending} aria-label="문의 창 닫기"><X size={24} /></button>
     <p className="eyebrow">LET’S TALK</p><h2 id="contact-title">어떤 설비를<br />함께 살펴볼까요?</h2>
     <p className="dialog-intro">궁금한 점과 현장의 고민을 남겨주세요.</p>
@@ -130,7 +139,7 @@ function ContactDialog({ open, onClose }: { open: boolean; onClose: () => void }
       <label>회신 이메일 <span>*</span><input type="email" name="email" autoComplete="email" placeholder="name@company.com" required maxLength={120} pattern={CONTACT_EMAIL_PATTERN} aria-invalid={emailError ? true : undefined} aria-describedby={emailHelpId}
         onInvalid={e => {
           const message = e.currentTarget.validity.valueMissing ? '답변받으실 이메일 주소를 입력해 주세요.' : '이메일 주소를 확인해 주세요. 예: name@company.com';
-          e.currentTarget.setCustomValidity(message);
+          e.currentTarget.setCustomValidity(t(message));
           setEmailError(message); setNotice(''); setStatus('idle');
         }}
         onInput={e => { e.currentTarget.setCustomValidity(''); setEmailError(''); }}
@@ -146,10 +155,11 @@ function ContactDialog({ open, onClose }: { open: boolean; onClose: () => void }
       {status === 'sent' && <button type="button" className="contact-new" onClick={() => { setStatus('idle'); setNotice(''); }}>새 문의 작성하기</button>}
       <a className="direct-email" href={`mailto:${EMAIL}`}>{EMAIL}<ArrowUpRight size={14} /></a>
     </form>
-  </dialog>;
+  </dialog>);
 }
 
 export default function App({ path = '/' }: { path?: string }) {
+  const { localize, locale, t } = useLanguage();
   const currentPath = path.endsWith('/') ? path : path + '/';
   const isHome = currentPath === '/';
   function sectionHref(path: string) {
@@ -158,7 +168,20 @@ export default function App({ path = '/' }: { path?: string }) {
     const hash = '#' + (fragment || sections[page] || 'home');
     return isHome ? hash : routeHref(hash);
   }
-  useEffect(() => { if (pageMetadata[currentPath]) document.title = pageMetadata[currentPath].title; }, [currentPath]);
+  useEffect(() => {
+    document.documentElement.lang = locale;
+    const page = pageMetadata[currentPath];
+    document.title = t(page?.title || '페이지를 찾을 수 없습니다.') + (page ? '' : ' | DATALAKE');
+    if (page) {
+      for (const selector of ['meta[name="description"]', 'meta[property="og:description"]']) document.querySelector(selector)?.setAttribute('content', t(page.description));
+      document.querySelector('meta[property="og:title"]')?.setAttribute('content', t(page.title));
+      const canonical = 'https://datalake.ai.kr' + localizedHref(routeHref(currentPath), locale);
+      document.querySelector('link[rel="canonical"]')?.setAttribute('href', canonical);
+      document.querySelector('meta[property="og:url"]')?.setAttribute('content', canonical);
+    }
+    document.querySelector('meta[property="og:locale"]')?.setAttribute('content', locale === 'en' ? 'en_US' : 'ko_KR');
+    document.querySelector('meta[property="og:site_name"]')?.setAttribute('content', locale === 'en' ? 'DATALAKE' : '데이터레이크 DATALAKE');
+  }, [currentPath, locale, t]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [selected, setSelected] = useState(0);
   const [application, setApplication] = useState(0);
@@ -214,9 +237,9 @@ export default function App({ path = '/' }: { path?: string }) {
     try { await navigator.clipboard.writeText(EMAIL); setCopied(true); }
     catch { window.location.href = `mailto:${EMAIL}`; }
   }
-  return <>
+  return localize(<>
     <a href="#main" className="skip-link">본문으로 바로가기</a>
-    <header className="header" id="top"><div className="header-inner"><Brand href={isHome ? "#home" : routeHref()} /><nav aria-label="주요 메뉴" className="desktop-nav">{navigation.map(item => item.href === "/solutions/" ? <div className="nav-group" key={item.href}><a href={sectionHref(item.href)} aria-current={currentPath.startsWith(item.href) ? "page" : undefined}>{item.label}<ChevronDown size={12} /></a><div className="nav-dropdown"><a href={sectionHref("/solutions/")}>산업 설비 고장예지<ArrowUpRight size={15} /></a>{solutionLinks.map((link,i) => <a href={sectionHref(link.path)} key={link.path}><span>0{i+1}</span>{link.title}</a>)}</div></div> : <a key={item.href} href={sectionHref(item.href)} aria-current={currentPath === item.href ? "page" : undefined}>{item.label}</a>)}</nav><a className="header-contact" href={sectionHref("/contact/")}>Contact <ArrowUpRight size={18} /></a><button className="menu-toggle icon-button" aria-label={menuOpen ? '메뉴 닫기' : '메뉴 열기'} aria-expanded={menuOpen} aria-controls="mobile-nav" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X /> : <Menu />}</button></div>
+    <header className="header" id="top"><div className="header-inner"><Brand href={isHome ? "#home" : routeHref()} /><nav aria-label="주요 메뉴" className="desktop-nav">{navigation.map(item => item.href === "/solutions/" ? <div className="nav-group" key={item.href}><a href={sectionHref(item.href)} aria-current={currentPath.startsWith(item.href) ? "page" : undefined}>{item.label}<ChevronDown size={12} /></a><div className="nav-dropdown"><a href={sectionHref("/solutions/")}>산업 설비 고장예지<ArrowUpRight size={15} /></a>{solutionLinks.map((link,i) => <a href={sectionHref(link.path)} key={link.path}><span>0{i+1}</span>{link.title}</a>)}</div></div> : <a key={item.href} href={sectionHref(item.href)} aria-current={currentPath === item.href ? "page" : undefined}>{item.label}</a>)}</nav><a className="header-contact" href={sectionHref("/contact/")}>Contact <ArrowUpRight size={18} /></a><LanguageSwitcher /><button className="menu-toggle icon-button" aria-label={menuOpen ? '메뉴 닫기' : '메뉴 열기'} aria-expanded={menuOpen} aria-controls="mobile-nav" onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X /> : <Menu />}</button></div>
       {menuOpen && <nav id="mobile-nav" className="mobile-nav" aria-label="모바일 메뉴" onClick={() => setMenuOpen(false)}>{navigation.map(item => <a key={item.href} href={sectionHref(item.href)} onClick={() => setMenuOpen(false)}>{item.label}<ArrowUpRight size={20} /></a>)}{solutionLinks.map(item => <a className="mobile-sublink" key={item.path} href={sectionHref(item.path)}>{item.title}<ArrowUpRight size={14} /></a>)}<a href={sectionHref("/contact/")} onClick={() => setMenuOpen(false)}>Contact<ArrowUpRight size={20} /></a></nav>}
     </header>
     <main id="main">{isHome ? <>
@@ -235,5 +258,5 @@ export default function App({ path = '/' }: { path?: string }) {
     </> : <DetailPage path={currentPath} onContact={openContact} visual={index => <SolutionVisual selected={index} />} />}</main>
     <footer className="footer"><div className="container"><div className="footer-top"><Brand light href={isHome ? "#home" : routeHref()} /><a href="#top" className="back-top">Back to top <ArrowUpRight size={17} /></a></div><div className="footer-sitemap"><div><strong>Solutions</strong><a href={sectionHref("/solutions/")}>산업 설비 고장예지</a>{solutionLinks.map(item => <a key={item.path} href={sectionHref(item.path)}>{item.title}</a>)}</div><div><strong>Technology</strong><a href={sectionHref("/technology/#explorer")}>신호 처리·특징 분석</a><a href={sectionHref("/technology/#models")}>AI 알고리즘</a><a href={sectionHref("/solutions/#approach")}>도입 검토 과정</a></div><div><strong>Applications</strong><a href={sectionHref("/applications/#pumps")}>펌프 설비</a><a href={sectionHref("/applications/#motors")}>전동기·회전기기</a><a href={sectionHref("/applications/#plants")}>발전·산업 플랜트</a></div><div><strong>Company</strong><a href={sectionHref("/company/")}>데이터레이크 소개</a><a href={sectionHref("/company/#history")}>주요 연혁</a><a href={sectionHref("/contact/")}>Contact</a></div></div><div className="footer-bottom"><div><p>주식회사 데이터레이크 <span>대표 박진아</span><span>사업자등록번호 533-86-03345</span></p><p>{ADDRESS}</p></div><p>© 2026 DATALAKE. All rights reserved.</p></div></div></footer>
     <ContactDialog open={contactOpen} onClose={() => setContactOpen(false)} />
-  </>;
+  </>);
 }
