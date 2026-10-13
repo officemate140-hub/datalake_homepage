@@ -31,9 +31,11 @@ npm run preview
 
 ## GitHub Pages 인계
 
-이 폴더의 내용을 별도 GitHub 저장소 루트에 올리는 구성을 준비했습니다. .github/workflows/deploy.yml은 npm 빌드 후 dist/를 GitHub Pages에 배포합니다. 실제 저장소 업로드·배포는 아직 하지 않았습니다.
+회사 공개 저장소 [officemate140-hub/datalake_homepage](https://github.com/officemate140-hub/datalake_homepage)에 배포했습니다. .github/workflows/deploy.yml은 main 변경 시 npm 빌드 후 dist/를 GitHub Pages에 자동 배포합니다. GitHub Settings → Pages의 Source는 GitHub Actions입니다.
 
-public/CNAME과 기본 canonical 도메인은 datalake.ai.kr입니다. 저장소에서 Pages를 활성화하고 도메인의 DNS 및 HTTPS를 설정해야 실제 주소가 연결됩니다. Google Search Console과 네이버 서치어드바이저 소유권 인증·사이트맵 제출도 별도 단계입니다.
+public/CNAME과 기본 canonical 도메인은 datalake.ai.kr입니다. GitHub Pages의 Custom domain도 datalake.ai.kr로 지정했습니다. 메일플러그 DNS에는 루트 A 레코드 185.199.108.153, 185.199.109.153, 185.199.110.153, 185.199.111.153 및 www CNAME officemate140-hub.github.io를 등록했습니다. DNS 변경 후 GitHub 인증서 발급이 끝나면 Pages의 Enforce HTTPS를 활성화합니다.
+
+Google Search Console과 네이버 서치어드바이저 소유권 인증·사이트맵 제출은 별도 단계입니다. 제출할 사이트맵은 https://datalake.ai.kr/sitemap.xml 입니다.
 
 공개 주소를 바꿀 때는 .env.example, public/CNAME, 배포 워크플로의 SITE_URL을 함께 확인하세요. 저장소 하위 경로에 올리는 경우 SITE_BASE를 /repository-name/으로 설정하고 canonical도 해당 HTTPS 주소로 맞춥니다.
 
