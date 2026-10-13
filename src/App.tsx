@@ -3,6 +3,7 @@ import { ArrowUpRight, ArrowRight, ArrowDown, Menu, X, Activity, Cpu, Radio, Mov
 
 import DetailPage, { HomeTechnology, InlineSolutionDetails } from './DetailPages';
 import { routeHref, pageMetadata, solutionLinks } from './pageContent';
+import { ContactDeliveryError, sendContact } from './contact';
 
 const asset = (name: string) => `${import.meta.env.BASE_URL}assets/${name}`;
 const EMAIL = import.meta.env.VITE_COMPANY_EMAIL || 'japark.work@gmail.com';
@@ -76,32 +77,64 @@ const applications = [
 
 function ContactDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const pending = useRef(false);
+  const statusRef = useRef<HTMLParagraphElement>(null);
   const [notice, setNotice] = useState('');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const sending = status === 'sending';
   useEffect(() => {
     if (open) { ref.current?.showModal(); document.body.style.overflow = 'hidden'; }
     else { ref.current?.close(); document.body.style.overflow = ''; }
     return () => { document.body.style.overflow = ''; };
   }, [open]);
-  function submit(event: FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    if (status === 'sent' || status === 'error') statusRef.current?.focus();
+  }, [status]);
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const values = new FormData(event.currentTarget);
-    const body = `안녕하세요, 데이터레이크 담당자님.\n\n회사/기관: ${values.get('company')}\n담당자: ${values.get('name')}\n회신 이메일: ${values.get('email')}\n관심 분야: ${values.get('equipment')}\n\n문의 내용:\n${values.get('message')}`;
-    const subject = `[홈페이지 문의] ${values.get('company')} - ${values.get('equipment')}`;
-    window.location.href = `mailto:${EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    setNotice('메일 앱에서 내용을 확인하고 전송해 주세요. 앱이 열리지 않으면 아래 이메일 주소로 직접 보내실 수 있습니다.');
+    if (pending.current || status === 'sent') return;
+    const form = event.currentTarget;
+    const values = new FormData(form);
+    if (['company', 'name', 'message'].some(key => !String(values.get(key) ?? '').trim())) {
+      setStatus('error'); setNotice('회사·기관명, 담당자명과 문의 내용을 입력해 주세요.'); return;
+    }
+    pending.current = true;
+    setStatus('sending'); setNotice('문의를 전송하고 있습니다. 잠시만 기다려 주세요.');
+    try {
+      const result = await sendContact(values, EMAIL, window.location.href);
+      if (result === 'activation-required') {
+        setStatus('error');
+        setNotice('현재 문의 수신 설정을 확인하고 있습니다. 입력하신 내용은 유지되며, 급한 문의는 아래 이메일로 보내 주세요.');
+      } else {
+        setStatus('sent');
+        setNotice('문의가 접수되었습니다. 남겨주신 이메일로 답변드리겠습니다.');
+        form.reset();
+      }
+    } catch (error) {
+      setStatus('error');
+      setNotice(error instanceof ContactDeliveryError && error.uncertain
+        ? '전송 결과를 확인하지 못했습니다. 중복 접수를 피하려면 아래 이메일로 접수 여부를 확인해 주세요. 입력 내용은 그대로 유지됩니다.'
+        : '문의를 전송하지 못했습니다. 입력 내용은 유지됩니다. 잠시 후 다시 시도하거나 아래 이메일로 문의해 주세요.');
+    } finally { pending.current = false; }
   }
-  return <dialog ref={ref} className="contact-dialog" onCancel={onClose} onClose={onClose} onClick={e => { if (e.target === ref.current) onClose(); }} aria-labelledby="contact-title">
-    <button className="dialog-close icon-button" onClick={onClose} aria-label="문의 창 닫기"><X size={24} /></button>
+  return <dialog ref={ref} className="contact-dialog" onCancel={e => { if (pending.current) e.preventDefault(); else onClose(); }} onClose={onClose} onClick={e => { if (e.target === ref.current && !pending.current) onClose(); }} aria-labelledby="contact-title">
+    <button className="dialog-close icon-button" onClick={onClose} disabled={sending} aria-label="문의 창 닫기"><X size={24} /></button>
     <p className="eyebrow">LET’S TALK</p><h2 id="contact-title">어떤 설비를<br />함께 살펴볼까요?</h2>
     <p className="dialog-intro">궁금한 점과 현장의 고민을 남겨주세요.</p>
-    <form onSubmit={submit}>
+    <form onSubmit={submit} aria-busy={sending}>
+      <fieldset className="contact-fields" disabled={sending || status === 'sent'}>
+      <legend className="contact-sr-only">문의 정보</legend>
       <div className="form-row"><label>회사 / 기관명 <span>*</span><input name="company" autoComplete="organization" placeholder="회사 또는 기관명" required maxLength={80} /></label><label>담당자명 <span>*</span><input name="name" autoComplete="name" placeholder="성함" required maxLength={40} /></label></div>
       <label>회신 이메일 <span>*</span><input type="email" name="email" autoComplete="email" placeholder="name@company.com" required maxLength={120} /></label>
       <label>관심 분야<select name="equipment" defaultValue="산업 설비 고장예지"><option>산업 설비 고장예지</option><option>AI 솔루션 개발</option><option>IoT 디바이스 개발</option><option>기술 협력 및 기타</option></select></label>
       <label>문의 내용 <span>*</span><textarea name="message" rows={3} placeholder="대상 설비와 필요하신 내용을 알려주세요." required maxLength={1200} /></label>
-      <p className="form-note">작성한 내용으로 메일 앱이 열립니다. 메일을 전송해야 문의가 전달되며, 이 페이지에는 입력 내용이 저장되지 않습니다.</p>
-      <button type="submit" className="button button-dark">메일로 문의하기 <ArrowUpRight size={19} /></button>
-      <p className="form-status" role="status">{notice}</p>
+      <div className="contact-honeypot" aria-hidden="true"><label>이 칸은 비워 주세요<input name="_honey" tabIndex={-1} autoComplete="off" /></label></div>
+      <p className="form-note">문의는 데이터레이크 담당자에게 이메일로 전달됩니다. 메일 앱을 따로 열 필요가 없습니다.</p>
+      <details className="contact-privacy"><summary>문의 정보 처리 안내</summary><p>회사·기관명, 담당자명, 회신 이메일과 문의 내용은 문의 접수 및 답변을 위해 사용합니다. 전송 서비스 FormSubmit을 통해 전달되며, 해당 서비스에 문의 내용이 30일간 보관됩니다. <a href="https://formsubmit.co/privacy.pdf" target="_blank" rel="noopener noreferrer">서비스 개인정보 안내</a></p></details>
+      <button type="submit" className="button button-dark">{sending ? '전송 중…' : status === 'sent' ? '접수 완료' : '문의 보내기'}{status === 'sent' ? <Check size={19} /> : <ArrowUpRight size={19} />}</button>
+      </fieldset>
+      <p ref={statusRef} tabIndex={-1} className={`form-status ${status === 'error' ? 'form-status-error' : ''}`} role="status" aria-live="polite" aria-atomic="true">{notice}</p>
+      {status === 'sent' && <button type="button" className="contact-new" onClick={() => { setStatus('idle'); setNotice(''); }}>새 문의 작성하기</button>}
       <a className="direct-email" href={`mailto:${EMAIL}`}>{EMAIL}<ArrowUpRight size={14} /></a>
     </form>
   </dialog>;
