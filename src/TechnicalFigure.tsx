@@ -1,14 +1,16 @@
+import { useLanguage } from './i18n';
 import { useId, useRef, useState } from 'react';
 import { Expand, X, ZoomIn, ZoomOut, ArrowUpRight } from 'lucide-react';
 import { routeHref } from './pageContent';
 
 export function TechnicalFigure({ image, title, caption }: { image: string; title: string; caption: string }) {
+  const { localize, t } = useLanguage();
   const dialog = useRef<HTMLDialogElement>(null);
   const [zoomed, setZoomed] = useState(false);
   const titleId = useId();
   const src = routeHref(`assets/${image}`);
-  return <figure className="technical-figure">
-    <button className="figure-preview" onClick={() => { setZoomed(false); dialog.current?.showModal(); }} aria-label={`${title} 확대 보기`}>
+  return localize(<figure className="technical-figure">
+    <button className="figure-preview" onClick={() => { setZoomed(false); dialog.current?.showModal(); }} aria-label={`${t(title)} — ${t('도표 확대 보기')}`}>
       <img src={src} alt={title} loading="lazy" />
       <span><Expand size={16} /> 도표 확대 보기</span>
     </button>
@@ -18,12 +20,13 @@ export function TechnicalFigure({ image, title, caption }: { image: string; titl
       <div className={`figure-scroll ${zoomed ? 'is-zoomed' : ''}`} tabIndex={0} aria-label="도표 이미지 영역"><img src={src} alt={title} /></div>
       <p>확대 버튼으로 글자를 크게 볼 수 있습니다. 확대 후 좌우로 이동해 살펴보세요.</p>
     </dialog>
-  </figure>;
+  </figure>);
 }
 
 export function CurrentSignalFigure() {
+  const { localize } = useLanguage();
   const path = Array.from({ length: 480 }, (_, i) => `${i ? 'L' : 'M'}${i + 40},${105 + Math.sin(i * .093) * (43 + 8 * Math.sin(i * .011)) + Math.sin(i * .64) * 2}`).join(' ');
-  return <svg className="current-signal" viewBox="0 0 560 225" role="img" aria-label="시간에 따른 전류 변화를 설명하는 예시 파형">
+  return localize(<svg className="current-signal" viewBox="0 0 560 225" role="img" aria-label="시간에 따른 전류 변화를 설명하는 예시 파형">
     <rect width="560" height="225" fill="#f7faf7" />
     {[55,105,155].map(y => <path key={y} d={`M40 ${y}H520`} stroke="#dce7de" />)}
     {[40,160,280,400,520].map(x => <path key={x} d={`M${x} 38V173`} stroke="#dce7de" />)}
@@ -31,5 +34,5 @@ export function CurrentSignalFigure() {
     <path d={path} stroke="#078e79" strokeWidth="2" fill="none" />
     <text x="40" y="201" fill="#698276" fontSize="10">전류 신호 · 설명용 예시</text>
     <text x="520" y="201" textAnchor="end" fill="#698276" fontSize="10">TIME →</text>
-  </svg>;
+  </svg>);
 }
