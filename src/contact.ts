@@ -1,4 +1,6 @@
 export type ContactResult = 'sent' | 'activation-required';
+// Keep browser validation and the transport guard consistent.
+export const CONTACT_EMAIL_PATTERN = String.raw`[^\s@]+@[^\s@]+\.[^\s@]+`;
 
 export class ContactDeliveryError extends Error {
   uncertain: boolean;
@@ -20,7 +22,7 @@ export async function sendContact(
   const name = field('name');
   const email = field('email');
   const message = field('message');
-  if (!company || !name || !message || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || field('_honey')) {
+  if (!company || !name || !message || !new RegExp(`^${CONTACT_EMAIL_PATTERN}$`).test(email) || field('_honey')) {
     throw new ContactDeliveryError();
   }
   const controller = new AbortController();

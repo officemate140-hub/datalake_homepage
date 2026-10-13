@@ -10,3 +10,6 @@
 .contact-privacy p{margin:0 0 12px;overflow-wrap:anywhere}
 .contact-privacy a{text-decoration:underline;text-underline-offset:3px}
 .contact-new{display:block;min-height:44px;margin:10px auto;color:#135c50;text-decoration:underline;text-underline-offset:4px}
+#root .contact-dialog .contact-email-help{display:block;margin-top:6px;color:#476860;font-size:14px;font-weight:400;line-height:1.7}
+#root .contact-dialog .contact-field-error,#root .contact-dialog .form-status-error{color:#9c302a}
+#root .contact-dialog input[aria-invalid="true"]{border-color:#a83e32;box-shadow:0 0 0 1px #a83e32}

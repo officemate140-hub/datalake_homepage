@@ -55,7 +55,7 @@ test('malformed service responses are not treated as delivered', async () => {
 });
 
 test('rejects whitespace-only required fields and honeypot submissions before any request', async () => {
-  for (const [key, value] of [['company', '  '], ['message', '\n '], ['email', 'not-email'], ['_honey', 'spam']]) {
+  for (const [key, value] of [['company', '  '], ['message', '\n '], ['email', 'not-email'], ['email', 'CC@DD'], ['_honey', 'spam']]) {
     const values = inquiry(); values.set(key, value);
     let called = false;
     await assert.rejects(send(async () => { called = true; return Response.json({ success: true }); }, values));
